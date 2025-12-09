@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Volume2, CheckCircle, AlertCircle, BookOpen, GraduationCap, X, Plus, Trash2, Save, Loader2, Sparkles, Clock, FileText, Download, LogOut, User, LogIn, ExternalLink, Filter, KeyRound, Settings, Check, Zap, Activity, PenLine, ChevronDown, ChevronUp, StickyNote, Search, Pencil, Edit3, NotebookPen, Library, ListChecks, Database, Square, CheckSquare, Sun, Moon, Globe } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Volume2, CheckCircle, AlertCircle, BookOpen, GraduationCap, X, Plus, Trash2, Save, Loader2, Sparkles, Clock, FileText, Download, LogOut, User, LogIn, ExternalLink, Filter, KeyRound, Settings, Check, Zap, Activity, PenLine, ChevronDown, ChevronUp, StickyNote, Search, Pencil, Edit3, NotebookPen, Library, ListChecks, Database, Square, CheckSquare, Globe } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, serverTimestamp } from 'firebase/firestore';
@@ -25,7 +25,6 @@ const GEMINI_API_KEY = "AIzaSyAtoBHF5-axdlUEGQvW4Ch1GJxIOIF7fos";
 const BUILT_IN_WORDS = [
   { word: 'Termin', article: 'der', plural: '-e', meaning: '預約；約會', englishMeaning: 'appointment', level: 'A1', type: 'noun', example: 'Ich habe einen Termin beim Arzt.', exampleMeaning: '我跟醫生有一個預約。' },
   { word: 'Arbeit', article: 'die', plural: '-en', meaning: '工作', englishMeaning: 'work', level: 'A1', type: 'noun', example: 'Die Arbeit macht mir Spaß.', exampleMeaning: '這份工作讓我很開心。' },
-  // ... (您的其他單字)
 ];
 
 // 初始化 Firebase
@@ -189,31 +188,31 @@ const SettingsModal = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-        <div className="bg-slate-900 dark:bg-slate-950 px-6 py-4 flex justify-between items-center text-white">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div className="bg-slate-900 px-6 py-4 flex justify-between items-center text-white">
           <h3 className="font-bold text-lg flex items-center gap-2"><Settings size={20}/> 系統設定與診斷</h3>
           <button onClick={onClose}><X size={20}/></button>
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-bold text-slate-700 dark:text-slate-200 mb-1">Google Gemini API Key</label>
-            <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="AIza..." className="w-full p-2 border rounded focus:ring-2 focus:ring-purple-500 outline-none font-mono text-sm dark:bg-slate-700 dark:border-slate-600 dark:text-white" />
+            <label className="block text-sm font-bold text-slate-700 mb-1">Google Gemini API Key</label>
+            <input type="password" value={key} onChange={(e) => setKey(e.target.value)} placeholder="AIza..." className="w-full p-2 border rounded focus:ring-2 focus:ring-purple-500 outline-none font-mono text-sm" />
             
             {diagResult && (
-              <div className={`mt-2 p-2 rounded text-xs flex items-start gap-2 ${diagStatus === 'error' ? 'bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-200' : 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-200'}`}>
+              <div className={`mt-2 p-2 rounded text-xs flex items-start gap-2 ${diagStatus === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
                 {diagStatus === 'testing' && <Loader2 size={14} className="animate-spin mt-0.5"/>}
                 <span className="break-all">{diagResult?.message || diagResult?.error}</span>
               </div>
             )}
             {diagStatus === 'success' && diagResult?.availableModels && (
-               <div className="max-h-24 overflow-y-auto bg-white dark:bg-slate-700 border border-green-200 dark:border-green-800 p-1.5 rounded font-mono text-[10px] leading-tight mt-2 dark:text-slate-300">
-                  {diagResult.availableModels.map(m => <div key={m} className={m === diagResult.testedModel ? 'text-purple-600 dark:text-purple-300 font-bold' : ''}>{m} {m === diagResult.testedModel && '(自動選用)'}</div>)}
+               <div className="max-h-24 overflow-y-auto bg-white border border-green-200 p-1.5 rounded font-mono text-[10px] leading-tight mt-2">
+                  {diagResult.availableModels.map(m => <div key={m} className={m === diagResult.testedModel ? 'text-purple-600 font-bold' : ''}>{m} {m === diagResult.testedModel && '(自動選用)'}</div>)}
                </div>
             )}
           </div>
           <div className="flex justify-between pt-2">
-            <button onClick={runDiagnosis} disabled={diagStatus === 'loading'} className="px-3 py-2 rounded text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-sm flex items-center gap-2"><Zap size={16}/> 測試連線</button>
-            <button onClick={handleSave} className="px-4 py-2 rounded text-white flex items-center gap-2 bg-slate-900 hover:bg-slate-800 dark:bg-slate-700 dark:hover:bg-slate-600"><Save size={18}/> 儲存設定</button>
+            <button onClick={runDiagnosis} disabled={diagStatus === 'loading'} className="px-3 py-2 rounded text-slate-600 border border-slate-300 hover:bg-slate-50 text-sm flex items-center gap-2"><Zap size={16}/> 測試連線</button>
+            <button onClick={handleSave} className="px-4 py-2 rounded text-white flex items-center gap-2 bg-slate-900 hover:bg-slate-800"><Save size={18}/> 儲存設定</button>
           </div>
         </div>
       </div>
@@ -221,27 +220,87 @@ const SettingsModal = ({ isOpen, onClose }) => {
   );
 };
 
-// --- LoginScreen, FilterChip ---
+// --- 使用者下拉選單元件 ---
+const UserMenu = ({ user, onLogout, onImportBuiltIn, onDownload, onSettings }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 p-1 rounded-full hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
+      >
+        {user.photoURL ? (
+          <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full border border-slate-200"/>
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+            <User size={18} />
+          </div>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="p-4 border-b border-slate-100 bg-slate-50">
+             <p className="text-xs text-slate-500 font-medium">已登入為</p>
+             <p className="text-sm font-bold text-slate-800 truncate">{user.displayName || user.email}</p>
+          </div>
+          
+          <div className="p-1">
+            <button onClick={() => { onImportBuiltIn(); setIsOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg flex items-center gap-2">
+              <Library size={16} className="text-purple-500" /> 匯入內建題庫
+            </button>
+            <button onClick={() => { onDownload(); setIsOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg flex items-center gap-2">
+              <Download size={16} className="text-blue-500" /> 匯出備份
+            </button>
+            <button onClick={() => { onSettings(); setIsOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg flex items-center gap-2">
+              <Settings size={16} className="text-slate-500" /> API 設定
+            </button>
+          </div>
+
+          <div className="border-t border-slate-100 p-1">
+            <button onClick={onLogout} className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2">
+              <LogOut size={16} /> 登出
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- LoginScreen ---
 const LoginScreen = ({ onLogin, onRedirectLogin, error, errorCode }) => (
-  <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
-    <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-slate-100 dark:border-slate-700">
-      <div className="bg-yellow-400 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-yellow-200 dark:shadow-yellow-900/20 transform -rotate-6"><BookOpen size={40} className="text-slate-900" /></div>
-      <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Deutsch Lernen</h1>
-      <p className="text-slate-500 dark:text-slate-400 mb-8">您的雲端德語單字本</p>
+  <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+    <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-slate-100">
+      <div className="bg-yellow-400 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-yellow-200 transform -rotate-6"><BookOpen size={40} className="text-slate-900" /></div>
+      <h1 className="text-3xl font-bold text-slate-900 mb-2">DeVoca<br/>Deutsch Lernen</h1>
+      <p className="text-slate-500 mb-8">您的雲端德語單字本</p>
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 p-4 rounded-lg text-sm mb-6 text-left border border-red-100 dark:border-red-800">
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg text-sm mb-6 text-left border border-red-100">
           <div className="flex items-center gap-2 font-bold mb-1"><AlertCircle size={16}/><span>登入遇到問題</span></div>
           <p>{error}</p>
           {errorCode === 'auth/popup-blocked' && <div className="mt-2"><button onClick={onRedirectLogin} className="w-full bg-purple-600 text-white text-xs py-2 rounded flex justify-center gap-2"><LogIn size={14}/> 改用跳轉登入</button></div>}
         </div>
       )}
-      <button onClick={onLogin} className="w-full bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-700 dark:text-white font-semibold py-3 px-4 rounded-xl flex justify-center gap-3 shadow-sm transition-colors"><span className="font-bold text-blue-600 dark:text-blue-400 mr-2">G</span> 使用 Google 帳號登入</button>
+      <button onClick={onLogin} className="w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold py-3 px-4 rounded-xl flex justify-center gap-3 shadow-sm transition-colors"><span className="font-bold text-blue-600 mr-2">G</span> 使用 Google 帳號登入</button>
     </div>
   </div>
 );
 
 const FilterChip = ({ label, isSelected, onClick, colorClass = "bg-slate-900 text-white" }) => (
-  <button onClick={onClick} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all h-8 flex items-center ${isSelected ? `${colorClass} border-transparent shadow` : "bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500"}`}>{label}</button>
+  <button onClick={onClick} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all h-8 flex items-center ${isSelected ? `${colorClass} border-transparent shadow` : "bg-white text-slate-500 border-slate-200 hover:border-slate-300"}`}>{label}</button>
 );
 
 // --- 筆記編輯 Modal ---
@@ -261,8 +320,8 @@ const NoteModal = ({ isOpen, onClose, note, onSave }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
-        <div className="bg-slate-900 dark:bg-slate-950 px-6 py-4 flex justify-between items-center text-white">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+        <div className="bg-slate-900 px-6 py-4 flex justify-between items-center text-white">
           <h3 className="font-bold text-lg flex items-center gap-2"><NotebookPen size={20}/> 編輯筆記</h3>
           <button onClick={onClose}><X size={20}/></button>
         </div>
@@ -271,11 +330,11 @@ const NoteModal = ({ isOpen, onClose, note, onSave }) => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="在這裡輸入筆記..."
-            className="w-full h-32 p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none text-slate-700 dark:text-slate-200 dark:bg-slate-700 dark:border-slate-600"
+            className="w-full h-32 p-3 border rounded-lg focus:ring-2 focus:ring-purple-500 outline-none resize-none text-slate-700"
           />
           <div className="flex justify-end gap-3 mt-4">
-            <button onClick={onClose} className="px-4 py-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">取消</button>
-            <button onClick={handleSave} className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 flex items-center gap-2"><Save size={18}/> 儲存</button>
+            <button onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">取消</button>
+            <button onClick={handleSave} className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800 flex items-center gap-2"><Save size={18}/> 儲存</button>
           </div>
         </div>
       </div>
@@ -292,94 +351,95 @@ const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard
     if ('speechSynthesis' in window) { window.speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = 'de-DE'; utterance.rate = 0.9; window.speechSynthesis.speak(utterance); }
   };
   const getCardStyle = () => { 
-    if (item.status === 'learned') return 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'; 
-    if (item.status === 'review') return 'bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800'; 
-    return 'bg-white border-gray-200 dark:bg-slate-800 dark:border-slate-700'; 
+    if (item.status === 'learned') return 'bg-emerald-50 border-emerald-200'; 
+    if (item.status === 'review') return 'bg-amber-50 border-amber-200'; 
+    return 'bg-white border-gray-200'; 
   };
   const getTypeBadgeColor = () => { 
-    if (item.type === 'noun') return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'; 
-    if (item.type === 'verb') return 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-200'; 
-    if (item.type === 'adj') return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-200'; 
-    return 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'; 
+    if (item.type === 'noun') return 'bg-blue-100 text-blue-700'; 
+    if (item.type === 'verb') return 'bg-purple-100 text-purple-700'; 
+    if (item.type === 'adj') return 'bg-yellow-100 text-yellow-700'; 
+    return 'bg-gray-100 text-gray-700'; 
   };
   
   const isBuiltIn = item.source === 'builtin';
   const SourceIcon = isBuiltIn ? Database : User;
-  const sourceColor = isBuiltIn ? "text-purple-400 dark:text-purple-300" : "text-orange-400 dark:text-orange-300";
+  const sourceColor = isBuiltIn ? "text-purple-400" : "text-orange-400";
 
   return (
     <div 
       className={`relative p-6 rounded-xl border-2 transition-all shadow-sm hover:shadow-md flex flex-col h-full 
         ${getCardStyle()} 
-        ${isSelected ? 'ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-slate-900 border-purple-500' : ''}
-        ${isBatchMode ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700' : ''}
+        ${isSelected ? 'ring-2 ring-purple-500 ring-offset-2 border-purple-500' : ''}
+        ${isBatchMode ? 'cursor-pointer hover:bg-slate-50' : ''}
       `}
       onClick={isBatchMode ? onSelect : undefined}
     >
       <div className="flex justify-between items-center mb-4">
         {/* 左上角：標籤區 (含來源圖示) */}
         <div className="flex gap-2 items-center">
-          <div className={`flex items-center justify-center p-1 rounded-full bg-slate-50 dark:bg-slate-700 ${sourceColor}`} title={isBuiltIn ? "內建單字" : "自行新增"}>
+          <div className={`flex items-center justify-center p-1 rounded-full bg-slate-50 ${sourceColor}`} title={isBuiltIn ? "內建單字" : "自行新增"}>
             <SourceIcon size={14} strokeWidth={2.5}/>
           </div>
-          <span className="h-6 flex items-center justify-center px-2 text-xs font-bold rounded bg-slate-800 dark:bg-slate-950 text-white">{item.level}</span>
+          <span className="h-6 flex items-center justify-center px-2 text-xs font-bold rounded bg-slate-800 text-white">{item.level}</span>
           <span className={`h-6 flex items-center justify-center px-2 text-xs font-bold rounded uppercase ${getTypeBadgeColor()}`}>{item.type}</span>
         </div>
 
         {/* 右上角：操作區 (或選取框) */}
         <div className="flex gap-1 items-center">
            {isBatchMode ? (
-             <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-purple-600 border-purple-600' : 'border-slate-300 dark:border-slate-600'}`}>
+             <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-purple-600 border-purple-600' : 'border-slate-300'}`}>
                 {isSelected && <Check size={16} className="text-white"/>}
              </div>
            ) : (
              <>
-                <button onClick={(e) => {e.stopPropagation(); onToggleStatus(item.id, item.status, 'review')}} className={`p-1.5 rounded-full ${item.status==='review'?'bg-amber-500 text-white':'text-gray-300 dark:text-slate-500 hover:text-amber-500 dark:hover:text-amber-400'}`} title="需加強"><AlertCircle size={18}/></button>
-                <button onClick={(e) => {e.stopPropagation(); onToggleStatus(item.id, item.status, 'learned')}} className={`p-1.5 rounded-full ${item.status==='learned'?'bg-emerald-500 text-white':'text-gray-300 dark:text-slate-500 hover:text-emerald-500 dark:hover:text-emerald-400'}`} title="已學會"><CheckCircle size={18}/></button>
-                <button onClick={(e) => {e.stopPropagation(); onEditCard(item)}} className="p-1.5 rounded-full text-gray-300 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 ml-1" title="編輯卡片"><Edit3 size={16}/></button>
-                <button onClick={(e) => {e.stopPropagation(); onDelete(item.id)}} className="p-1.5 rounded-full text-gray-300 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400" title="刪除"><Trash2 size={16}/></button>
+                <button onClick={(e) => {e.stopPropagation(); onToggleStatus(item.id, item.status, 'review')}} className={`p-1.5 rounded-full ${item.status==='review'?'bg-amber-500 text-white':'text-gray-300 hover:text-amber-500'}`} title="需加強"><AlertCircle size={18}/></button>
+                <button onClick={(e) => {e.stopPropagation(); onToggleStatus(item.id, item.status, 'learned')}} className={`p-1.5 rounded-full ${item.status==='learned'?'bg-emerald-500 text-white':'text-gray-300 hover:text-emerald-500'}`} title="已學會"><CheckCircle size={18}/></button>
+                <button onClick={(e) => {e.stopPropagation(); onEditCard(item)}} className="p-1.5 rounded-full text-gray-300 hover:text-blue-500 ml-1" title="編輯卡片"><Edit3 size={16}/></button>
+                <button onClick={(e) => {e.stopPropagation(); onDelete(item.id)}} className="p-1.5 rounded-full text-gray-300 hover:text-red-500" title="刪除"><Trash2 size={16}/></button>
              </>
            )}
         </div>
       </div>
       <div className="mb-4">
         <div className="flex items-baseline gap-2 mb-1 flex-wrap">
-          {item.type === 'noun' && <span className={`text-lg font-bold ${item.article==='der'?'text-blue-600 dark:text-blue-400':item.article==='die'?'text-red-500 dark:text-red-400':item.article==='das'?'text-green-600 dark:text-green-400':'text-gray-500 dark:text-gray-400'}`}>{item.article}</span>}
-          <h2 className="text-3xl font-bold text-slate-800 dark:text-white">{item.word}</h2>
-          <button onClick={(e) => handleSpeak(item.type==='noun'?`${item.article} ${item.word}`:item.word, e)} className="text-slate-400 dark:text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 p-1"><Volume2 size={20}/></button>
+          {item.type === 'noun' && <span className={`text-lg font-bold ${item.article==='der'?'text-blue-600':item.article==='die'?'text-red-500':item.article==='das'?'text-green-600':'text-gray-500'}`}>{item.article}</span>}
+          <h2 className="text-3xl font-bold text-slate-800">{item.word}</h2>
+          <button onClick={(e) => handleSpeak(item.type==='noun'?`${item.article} ${item.word}`:item.word, e)} className="text-slate-400 hover:text-slate-800 p-1"><Volume2 size={20}/></button>
         </div>
-        <div className="text-sm text-slate-500 dark:text-slate-400 mb-2 font-mono">{item.type==='noun'&&item.plural?`Pl. ${item.word}${item.plural}`:''}</div>
+        <div className="text-sm text-slate-500 mb-2 font-mono">{item.type==='noun'&&item.plural?`Pl. ${item.word}${item.plural}`:''}</div>
         
         {/* 翻譯區域 */}
-        <div className="border-l-4 border-slate-200 dark:border-slate-600 pl-3">
-          <p className="text-lg text-slate-700 dark:text-slate-200 font-medium">{item.meaning}</p>
-          <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">
+        <div className="border-l-4 border-slate-200 pl-3">
+          <p className="text-lg text-slate-700 font-medium">{item.meaning}</p>
+          <p className="text-sm text-slate-400 mt-0.5">
             {item.englishMeaning ? `(${item.englishMeaning})` : <span className="opacity-50 italic">(點擊上方編輯按鈕新增英文)</span>}
           </p>
         </div>
 
-        {item.type==='verb'&&item.conjugation&&<div className="mt-3 bg-slate-100 dark:bg-slate-700/50 p-2 rounded text-sm text-slate-600 dark:text-slate-300 flex gap-2 border border-slate-200 dark:border-slate-600"><Clock size={16} className="mt-0.5 text-purple-500 dark:text-purple-400 shrink-0"/><div className="font-mono">{item.conjugation}</div></div>}
+        {item.type==='verb'&&item.conjugation&&<div className="mt-3 bg-slate-100 p-2 rounded text-sm text-slate-600 flex gap-2 border border-slate-200"><Clock size={16} className="mt-0.5 text-purple-500 shrink-0"/><div className="font-mono">{item.conjugation}</div></div>}
       </div>
-      <div className="mt-auto pt-4 border-t border-black/5 dark:border-white/10">
-        <div className="flex gap-2 mb-1"><p className="text-sm text-slate-600 dark:text-slate-400 italic flex-1">"{item.example}"</p><button onClick={(e)=>handleSpeak(item.example,e)} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300"><Volume2 size={16}/></button></div>
-        <p className="text-xs text-slate-400 dark:text-slate-500 pl-1">{item.exampleMeaning}</p>
+      <div className="mt-auto pt-4 border-t border-black/5">
+        <div className="flex gap-2 mb-1"><p className="text-sm text-slate-600 italic flex-1">"{item.example}"</p><button onClick={(e)=>handleSpeak(item.example,e)} className="text-slate-400 hover:text-slate-600"><Volume2 size={16}/></button></div>
+        <p className="text-xs text-slate-400 pl-1">{item.exampleMeaning}</p>
       </div>
 
-      <div className="mt-3 pt-2 border-t border-dashed border-gray-200 dark:border-slate-600 flex flex-col gap-2">
+      <div className="mt-3 pt-2 border-t border-dashed border-gray-200 flex flex-col gap-2">
         <div className="flex justify-between items-center">
           {item.note ? (
             <button 
               onClick={(e) => {e.stopPropagation(); setIsNoteExpanded(!isNoteExpanded)}}
-              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center gap-1 transition-colors"
+              className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
             >
               {isNoteExpanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
               {isNoteExpanded ? '收起筆記' : '查看筆記'}
             </button>
           ) : <span className="text-xs text-transparent">.</span>}
           
+          {/* 筆記按鈕 (筆記本圖示 NotebookPen) */}
           <button 
             onClick={(e) => {e.stopPropagation(); onEditNote(item)}}
-            className="text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors p-1 rounded-full hover:bg-purple-50 dark:hover:bg-purple-900/30"
+            className="text-slate-400 hover:text-purple-600 transition-colors p-1 rounded-full hover:bg-purple-50"
             title="編輯筆記"
           >
             <NotebookPen size={16} />
@@ -387,7 +447,7 @@ const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard
         </div>
         
         {item.note && isNoteExpanded && (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-sm text-slate-700 dark:text-slate-200 border border-yellow-100 dark:border-yellow-900/50 relative">
+          <div className="bg-yellow-50 p-3 rounded-lg text-sm text-slate-700 border border-yellow-100 relative">
             <StickyNote size={14} className="text-yellow-400 absolute top-2 right-2 opacity-50"/>
             <p className="whitespace-pre-wrap">{item.note}</p>
           </div>
@@ -482,17 +542,17 @@ const BatchImportModal = ({ isOpen, onClose, onBatchAdd }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
         <div className="bg-purple-900 px-6 py-4 flex justify-between items-center text-white shrink-0">
           <div className="flex items-center gap-3"><Sparkles size={20} className="text-yellow-400"/><h3 className="font-bold">AI 批量匯入</h3>
           {!hasKey && <span className="bg-red-500/20 text-red-200 text-xs px-2 py-1 rounded border border-red-500/50">未設定 API Key</span>}</div>
           {!isProcessing && <button onClick={onClose}><X size={20}/></button>}
         </div>
-        <div className="p-6 space-y-4 overflow-y-auto text-slate-800 dark:text-white">
-          <textarea value={inputText} onChange={(e)=>setInputText(e.target.value)} disabled={isProcessing} placeholder="貼上單字列表 (一行一個)..." className="w-full h-48 p-4 border rounded font-mono text-sm dark:bg-slate-700 dark:border-slate-600"/>
-          {isProcessing && <div className="w-full bg-slate-100 dark:bg-slate-700 h-2 rounded overflow-hidden"><div className="bg-purple-600 h-2 transition-all" style={{width: `${progress}%`}}></div></div>}
+        <div className="p-6 space-y-4 overflow-y-auto text-slate-800">
+          <textarea value={inputText} onChange={(e)=>setInputText(e.target.value)} disabled={isProcessing} placeholder="貼上單字列表 (一行一個)..." className="w-full h-48 p-4 border rounded font-mono text-sm"/>
+          {isProcessing && <div className="w-full bg-slate-100 h-2 rounded overflow-hidden"><div className="bg-purple-600 h-2 transition-all" style={{width: `${progress}%`}}></div></div>}
           <div className="flex justify-between items-center">
-             <span className="text-sm text-slate-500 dark:text-slate-400">{statusMsg}</span>
+             <span className="text-sm text-slate-500">{statusMsg}</span>
              {!isProcessing && <button onClick={processBatch} className="px-6 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">開始分析</button>}
           </div>
         </div>
@@ -545,28 +605,28 @@ const WordFormModal = ({ isOpen, onClose, onSave, initialData }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
-        <div className="bg-slate-900 dark:bg-slate-950 px-6 py-4 flex justify-between items-center text-white shrink-0">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="bg-slate-900 px-6 py-4 flex justify-between items-center text-white shrink-0">
           <h3 className="font-bold text-lg">{initialData ? '編輯單字' : '新增單字'}</h3>
           <button onClick={onClose}><X size={20}/></button>
         </div>
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto text-slate-800 dark:text-white">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto text-slate-800">
           <div className="flex gap-2">
-            <input required value={formData.word} onChange={e=>setFormData({...formData, word: e.target.value})} className="flex-1 p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="單字"/>
+            <input required value={formData.word} onChange={e=>setFormData({...formData, word: e.target.value})} className="flex-1 p-2 border rounded" placeholder="單字"/>
             <button type="button" onClick={handleAutoFill} disabled={isGenerating || !hasKey} className={`px-3 py-2 rounded text-white flex gap-2 items-center ${hasKey?'bg-purple-600':'bg-slate-400'}`}>{isGenerating?<Loader2 className="animate-spin" size={18}/>:<Sparkles size={18}/>} AI 填寫</button>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <input required value={formData.meaning} onChange={e=>setFormData({...formData, meaning: e.target.value})} className="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="中文意思"/>
-            <input value={formData.englishMeaning} onChange={e=>setFormData({...formData, englishMeaning: e.target.value})} className="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="英文意思"/>
+            <input required value={formData.meaning} onChange={e=>setFormData({...formData, meaning: e.target.value})} className="p-2 border rounded" placeholder="中文意思"/>
+            <input value={formData.englishMeaning} onChange={e=>setFormData({...formData, englishMeaning: e.target.value})} className="p-2 border rounded" placeholder="英文意思"/>
           </div>
-          <div className="grid grid-cols-2 gap-4"><select value={formData.type} onChange={e=>setFormData({...formData, type: e.target.value})} className="p-2 border rounded dark:bg-slate-700 dark:border-slate-600"><option value="noun">名詞</option><option value="verb">動詞</option><option value="adj">形容詞</option><option value="adv">副詞</option></select><select value={formData.level} onChange={e=>setFormData({...formData, level: e.target.value})} className="p-2 border rounded dark:bg-slate-700 dark:border-slate-600"><option value="A1">A1</option><option value="A2">A2</option><option value="B1">B1</option></select></div>
-          <div className="grid grid-cols-2 gap-4"><select value={formData.article} onChange={e=>setFormData({...formData, article: e.target.value})} className="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" disabled={formData.type!=='noun'}><option value="">-</option><option value="der">der</option><option value="die">die</option><option value="das">das</option></select><input value={formData.plural} onChange={e=>setFormData({...formData, plural: e.target.value})} className="p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="複數" disabled={formData.type!=='noun'}/></div>
-          {formData.type==='verb'&&<input value={formData.conjugation} onChange={e=>setFormData({...formData, conjugation: e.target.value})} className="w-full p-2 border border-purple-200 bg-purple-50 dark:bg-purple-900/30 dark:border-purple-800 rounded" placeholder="動詞變化"/>}
-          <input value={formData.example} onChange={e=>setFormData({...formData, example: e.target.value})} className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="例句"/>
-          <input value={formData.exampleMeaning} onChange={e=>setFormData({...formData, exampleMeaning: e.target.value})} className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600" placeholder="例句翻譯"/>
+          <div className="grid grid-cols-2 gap-4"><select value={formData.type} onChange={e=>setFormData({...formData, type: e.target.value})} className="p-2 border rounded"><option value="noun">名詞</option><option value="verb">動詞</option><option value="adj">形容詞</option><option value="adv">副詞</option></select><select value={formData.level} onChange={e=>setFormData({...formData, level: e.target.value})} className="p-2 border rounded"><option value="A1">A1</option><option value="A2">A2</option><option value="B1">B1</option></select></div>
+          <div className="grid grid-cols-2 gap-4"><select value={formData.article} onChange={e=>setFormData({...formData, article: e.target.value})} className="p-2 border rounded" disabled={formData.type!=='noun'}><option value="">-</option><option value="der">der</option><option value="die">die</option><option value="das">das</option></select><input value={formData.plural} onChange={e=>setFormData({...formData, plural: e.target.value})} className="p-2 border rounded" placeholder="複數" disabled={formData.type!=='noun'}/></div>
+          {formData.type==='verb'&&<input value={formData.conjugation} onChange={e=>setFormData({...formData, conjugation: e.target.value})} className="w-full p-2 border border-purple-200 bg-purple-50 rounded" placeholder="動詞變化"/>}
+          <input value={formData.example} onChange={e=>setFormData({...formData, example: e.target.value})} className="w-full p-2 border rounded" placeholder="例句"/>
+          <input value={formData.exampleMeaning} onChange={e=>setFormData({...formData, exampleMeaning: e.target.value})} className="w-full p-2 border rounded" placeholder="例句翻譯"/>
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 rounded">取消</button>
-            <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800 dark:bg-slate-600 dark:hover:bg-slate-500 flex items-center gap-2"><Save size={18}/> 儲存</button>
+            <button type="button" onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">取消</button>
+            <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800 flex items-center gap-2"><Save size={18}/> 儲存</button>
           </div>
         </form>
       </div>
@@ -595,39 +655,7 @@ export default function App() {
   const [selectedSources, setSelectedSources] = useState([]); 
   const [searchTerm, setSearchTerm] = useState(''); 
 
-  // 1. 深色模式狀態與切換 (預設讀取系統或本地設定)
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark' || 
-             (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    }
-    return false;
-  });
-
-  // 切換模式並存入 LocalStorage
-  const toggleTheme = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    localStorage.setItem('theme', newMode ? 'dark' : 'light');
-    
-    // 直接操作 DOM，確保 class 切換
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
-
-  // 初始載入時套用
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-
-  // 2. 滾動偵測與篩選器收合 (預設收起)
+  // 1. 滾動偵測與篩選器收合 (預設收起)
   const [isScrolled, setIsScrolled] = useState(false);
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
@@ -660,7 +688,7 @@ export default function App() {
     }
   }, [isScrolled]);
 
-  // 5. 注入 Tailwind Config (強制 class 模式 - 修正版)
+  // 5. 注入 Tailwind Config (強制 class 模式 - 雖然不切換但保留架構)
   useEffect(() => {
     // 優先設置 window.tailwind，確保在 CDN 載入前就生效
     window.tailwind = { config: { darkMode: 'class' } };
@@ -853,68 +881,56 @@ export default function App() {
 
   const activeFiltersCount = selectedLevels.length + selectedTypes.length + selectedStatuses.length + selectedSources.length;
 
-  if (isLoading) return <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-500"><Loader2 className="animate-spin mb-4" size={32} /><p>載入中...</p></div>;
+  if (isLoading) return <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-500"><Loader2 className="animate-spin mb-4" size={32} /><p>載入中...</p></div>;
   if (!firebaseConfig.apiKey || firebaseConfig.apiKey.includes("apiKey")) return <div className="min-h-screen flex items-center justify-center bg-slate-100 p-8 font-sans"><div className="bg-white p-8 rounded-xl shadow-lg max-w-lg w-full text-center"><AlertCircle size={32} className="mx-auto text-red-500 mb-4"/><h2 className="text-2xl font-bold text-slate-800 mb-2">尚未設定資料庫</h2><p className="text-slate-500">請打開 <code>App.jsx</code> 填入您的 Firebase Keys。</p></div></div>;
   if (!user) return <LoginScreen onLogin={handleLogin} onRedirectLogin={handleRedirectLogin} error={authError} errorCode={authErrorCode} />;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans flex flex-col">
-      <header className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 sticky top-0 z-20 shadow-sm px-4 py-3 flex justify-between items-center">
-        <div className="flex items-center gap-2"><div className="bg-yellow-400 p-1.5 rounded text-slate-900"><BookOpen size={20} /></div><span className="font-bold text-lg hidden sm:inline">Deutsch App</span></div>
+    <div className="min-h-screen bg-slate-50 text-slate-800 font-sans flex flex-col">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm px-4 py-3 flex justify-between items-center">
+        <div className="flex items-center gap-2"><div className="bg-yellow-400 p-1.5 rounded text-slate-900"><BookOpen size={20} /></div><span className="font-bold text-lg hidden sm:inline">DeVoca App</span></div>
         <div className="flex gap-2 items-center">
-            <button 
-              onClick={toggleTheme} 
-              className="p-2 border rounded-lg transition-colors bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"
-              title={isDarkMode ? "切換亮色模式" : "切換深色模式"}
-            >
-              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
             {/* 批次選取開關 */}
             <button 
               onClick={() => { setIsBatchMode(!isBatchMode); setSelectedItems(new Set()); }}
-              className={`p-2 border rounded-lg transition-colors ${isBatchMode ? 'bg-purple-100 border-purple-400 text-purple-700 dark:bg-purple-900/40 dark:border-purple-500 dark:text-purple-300' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400'}`}
+              className={`p-2 border rounded-lg transition-colors ${isBatchMode ? 'bg-purple-100 border-purple-400 text-purple-700' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'}`}
               title="批次管理"
             >
               <ListChecks size={18} />
             </button>
 
-            <div className="flex items-center gap-2 mr-2 border-r pr-4 border-slate-200 dark:border-slate-700">
-               {user.photoURL ? <img src={user.photoURL} alt="User" className="w-8 h-8 rounded-full"/> : <User size={20} />}
-               <button onClick={handleLogout} className="text-sm text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 flex items-center gap-1"><LogOut size={16} /> <span className="hidden sm:inline">登出</span></button>
+            <div className="flex items-center gap-2 mr-2 border-r pr-4 border-slate-200">
+               {/* 這裡改成下拉選單 UserMenu */}
+               <UserMenu 
+                 user={user} 
+                 onLogout={handleLogout} 
+                 onImportBuiltIn={handleImportBuiltIn}
+                 onDownload={downloadData}
+                 onSettings={() => setShowSettingsModal(true)}
+               />
             </div>
-            {/* 新增：匯入內建單字庫按鈕 */}
-            <button 
-              onClick={handleImportBuiltIn} 
-              disabled={isImporting}
-              className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-purple-600 dark:text-purple-400 disabled:opacity-50" 
-              title="匯入題庫"
-            >
-              {isImporting ? <Loader2 className="animate-spin" size={18} /> : <Library size={18} />}
-            </button>
             
-            <button onClick={() => setShowSettingsModal(true)} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400" title="API 設定"><Settings size={18} /></button>
-            <button onClick={downloadData} className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400"><Download size={18} /></button>
             <button onClick={() => setShowBatchModal(true)} className="px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-1 shadow-sm"><FileText size={18} /> <span className="hidden sm:inline">批量</span></button>
-            <button onClick={openAddModal} className="px-3 py-2 bg-slate-900 dark:bg-slate-700 text-white rounded-lg hover:bg-slate-800 dark:hover:bg-slate-600 flex items-center gap-1 shadow-sm"><Plus size={18} /> <span className="hidden sm:inline">新增</span></button>
+            <button onClick={openAddModal} className="px-3 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 flex items-center gap-1 shadow-sm"><Plus size={18} /> <span className="hidden sm:inline">新增</span></button>
         </div>
       </header>
 
       {/* 2. 主畫面使用全寬版面 (max-w-full + 適當 padding) */}
       <main className="w-full max-w-[1920px] mx-auto px-4 md:px-6 lg:px-8 py-4 flex-grow">
         {vocabList.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl mt-8 mx-auto max-w-4xl">
-             <GraduationCap size={48} className="mx-auto text-slate-300 dark:text-slate-600 mb-4"/>
-             <h3 className="text-xl font-bold text-slate-700 dark:text-slate-200 mb-2">單字本是空的</h3>
-             <p className="text-slate-500 dark:text-slate-400 mb-6">點擊右上角的「新增」按鈕開始建立單字庫，或匯入內建題庫。</p>
+          <div className="text-center py-12 border-2 border-dashed border-slate-300 rounded-xl mt-8 mx-auto max-w-4xl">
+             <GraduationCap size={48} className="mx-auto text-slate-300 mb-4"/>
+             <h3 className="text-xl font-bold text-slate-700 mb-2">單字本是空的</h3>
+             <p className="text-slate-500 mb-6">點擊右上角的「新增」按鈕開始建立單字庫，或匯入內建題庫。</p>
              <div className="flex justify-center gap-4">
-                <button onClick={seedData} className="px-6 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">匯入範例單字</button>
+                <button onClick={seedData} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">匯入範例單字</button>
                 <button onClick={handleImportBuiltIn} className="px-6 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"><Library size={18}/> 匯入內建題庫</button>
              </div>
           </div>
          ) : (
           <>
              {/* 1. 智慧收折篩選器 */}
-             <div className={`mb-6 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm sticky top-20 z-10 transition-all duration-300 ease-in-out ${isScrolled && !isFilterExpanded ? 'p-2' : 'p-5'}`}>
+             <div className={`mb-6 bg-white rounded-2xl border border-slate-200 shadow-sm sticky top-20 z-10 transition-all duration-300 ease-in-out ${isScrolled && !isFilterExpanded ? 'p-2' : 'p-5'}`}>
                 {/* 篩選器 Header (點擊可展開/收起) */}
                 <div 
                   className="flex items-center justify-between"
@@ -928,24 +944,24 @@ export default function App() {
                          placeholder="搜尋德文單字..." 
                          value={searchTerm}
                          onChange={(e) => setSearchTerm(e.target.value)}
-                         className="w-full pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm transition-all dark:text-white"
+                         className="w-full pl-9 pr-4 py-1.5 bg-slate-50 border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm transition-all"
                        />
                     </div>
                   </div>
 
                   <div 
-                    className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider cursor-pointer select-none"
+                    className="flex items-center gap-2 text-slate-500 text-xs font-bold uppercase tracking-wider cursor-pointer select-none"
                     onClick={() => setIsFilterExpanded(!isFilterExpanded)}
                   >
                     <Filter size={14} />
                     <span>篩選 ({filtered.length}/{vocabList.length})</span>
                     {isScrolled && !isFilterExpanded && activeFiltersCount > 0 && (
-                      <span className="bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-full normal-case">
+                      <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full normal-case">
                         {activeFiltersCount} 個條件
                       </span>
                     )}
                     {isScrolled && (
-                      <div className="text-slate-400 hover:text-slate-600">
+                      <div className="text-slate-400 hover:text-slate-600 ml-1">
                         {isFilterExpanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
                       </div>
                     )}
@@ -969,14 +985,16 @@ export default function App() {
                {filtered.map(item => <VocabularyCard key={item.id} item={item} onToggleStatus={handleToggleStatus} onDelete={handleDeleteWord} onEditNote={openEditNote} onEditCard={openEditCardModal} isBatchMode={isBatchMode} isSelected={selectedItems.has(item.id)} onSelect={() => toggleSelect(item.id)} />)}
              </div>
 
-             {/* 批次操作浮動選單 */}
+             {/* 批次操作浮動選單 (手機版樣式優化：w-[92%] + justify-between + whitespace-nowrap) */}
              {isBatchMode && selectedItems.size > 0 && (
-                <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white dark:bg-slate-800 px-6 py-3 rounded-full shadow-xl border border-slate-200 dark:border-slate-700 flex items-center gap-4 animate-in slide-in-from-bottom-4">
-                  <span className="text-slate-700 dark:text-white font-bold">{selectedItems.size} 張已選取</span>
-                  <button onClick={handleBatchDelete} className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-full text-sm font-bold flex items-center gap-2">
-                    <Trash2 size={16}/> 刪除
-                  </button>
-                  <button onClick={() => setSelectedItems(new Set())} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm">取消選取</button>
+                <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[92%] max-w-md bg-white px-4 py-3 rounded-full shadow-xl border border-slate-200 flex justify-between items-center gap-3 animate-in slide-in-from-bottom-4 z-50">
+                  <span className="text-slate-700 font-bold whitespace-nowrap ml-2">{selectedItems.size} 張已選取</span>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => setSelectedItems(new Set())} className="text-slate-500 hover:text-slate-700 text-sm px-3 py-2 whitespace-nowrap">取消</button>
+                    <button onClick={handleBatchDelete} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 whitespace-nowrap shadow-sm">
+                      <Trash2 size={16}/> 刪除
+                    </button>
+                  </div>
                 </div>
              )}
           </>
@@ -984,18 +1002,18 @@ export default function App() {
       </main>
       
       {/* Footer */}
-      <footer className="bg-white dark:bg-slate-900 border-t dark:border-slate-800 py-6 mt-auto">
+      <footer className="bg-white border-t border-slate-200 py-6 mt-auto">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-sm text-slate-500 dark:text-slate-400">
+          <p className="text-sm text-slate-500">
             © 2025 German Vocabulary Tool. 
           </p>
-          <div className="mt-2 flex items-center justify-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+          <div className="mt-2 flex items-center justify-center gap-2 text-xs text-slate-400">
             <span>Developed by</span>
             <a 
               href="https://nikkistudiotw.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-semibold flex items-center gap-1 transition-colors"
+              className="text-purple-600 hover:text-purple-800 font-semibold flex items-center gap-1 transition-colors"
             >
               Nikki Yu <Globe size={12} />
             </a>
