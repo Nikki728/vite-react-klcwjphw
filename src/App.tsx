@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Volume2, CheckCircle, AlertCircle, BookOpen, GraduationCap, X, Plus, Trash2, Save, Loader2, Sparkles, Clock, FileText, Download, LogOut, User, LogIn, ExternalLink, Filter, KeyRound, Settings, Check, Zap, Activity, PenLine, ChevronDown, ChevronUp, StickyNote, Search, Pencil, Edit3, NotebookPen, Library, ListChecks, Database, Square, CheckSquare, Sun, Moon, Globe } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
@@ -20,14 +20,13 @@ const firebaseConfig = {
 const GEMINI_API_KEY = "AIzaSyAtoBHF5-axdlUEGQvW4Ch1GJxIOIF7fos"; 
 
 // ==========================================
-// 📚 內建單字庫 (預設標記為 builtin)
+// 📚 內建單字庫
 // ==========================================
 const BUILT_IN_WORDS = [
   { word: 'Termin', article: 'der', plural: '-e', meaning: '預約；約會', englishMeaning: 'appointment', level: 'A1', type: 'noun', example: 'Ich habe einen Termin beim Arzt.', exampleMeaning: '我跟醫生有一個預約。' },
   { word: 'Arbeit', article: 'die', plural: '-en', meaning: '工作', englishMeaning: 'work', level: 'A1', type: 'noun', example: 'Die Arbeit macht mir Spaß.', exampleMeaning: '這份工作讓我很開心。' },
-  // ... 您可以在這裡貼上更多單字
+  // ... (您的其他單字)
 ];
-// ==========================================
 
 // 初始化 Firebase
 let app, auth, db;
@@ -663,22 +662,15 @@ export default function App() {
 
   // 5. 注入 Tailwind Config (強制 class 模式 - 修正版)
   useEffect(() => {
-    // 這裡我們建立一個 script 標籤來定義設定，這比直接設 window 變數更穩
-    if (!document.getElementById('tailwind-config')) {
-      const configScript = document.createElement('script');
-      configScript.id = 'tailwind-config';
-      configScript.innerHTML = "tailwind = { config: { darkMode: 'class' } };";
-      document.head.insertBefore(configScript, document.head.firstChild);
-    }
+    // 優先設置 window.tailwind，確保在 CDN 載入前就生效
+    window.tailwind = { config: { darkMode: 'class' } };
     
+    // 載入 CDN
     if (!document.getElementById('tailwind-cdn')) {
       const script = document.createElement('script');
       script.id = 'tailwind-cdn';
       script.src = 'https://cdn.tailwindcss.com';
-      // 確保 config 先執行
-      setTimeout(() => {
-          document.head.appendChild(script);
-      }, 10);
+      document.head.appendChild(script);
     }
   }, []);
 
