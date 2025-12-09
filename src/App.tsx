@@ -17,7 +17,7 @@ const firebaseConfig = {
 };
 
 // Gemini API Key (已填入您的 Key)
-const GEMINI_API_KEY = "AIzaSyAtoBHF5-axdlUEGQvW4Ch1GJxIOIF7fos"; 
+const GEMINI_API_KEY = "AIzaSyA-S4VET4VQ0Xv6bHrIIen5AROAUunCHMU"; 
 
 // ==========================================
 // 📚 內建單字庫：A1 等級
