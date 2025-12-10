@@ -729,6 +729,32 @@ const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard
       </div>
 
       <div className="mt-3 pt-2 border-t border-dashed border-gray-200 flex flex-col gap-2">
+      <div className="flex justify-between items-center">
+          {item.note ? (
+            <button 
+              onClick={(e) => {e.stopPropagation(); setIsNoteExpanded(!isNoteExpanded)}}
+              className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
+            >
+              {isNoteExpanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+              {isNoteExpanded ? '收起筆記' : '查看筆記'}
+            </button>
+          ) : <span className="text-xs text-transparent">.</span>}
+          
+          <button 
+            onClick={(e) => {e.stopPropagation(); onEditNote(item)}}
+            className="text-slate-400 hover:text-purple-600 transition-colors p-1 rounded-full hover:bg-purple-50"
+            title="編輯筆記"
+          >
+            <NotebookPen size={16} />
+          </button>
+        </div>
+        
+        {item.note && isNoteExpanded && (
+          <div className="bg-yellow-50 p-3 rounded-lg text-sm text-slate-700 border border-yellow-100 relative">
+            <StickyNote size={14} className="text-yellow-400 absolute top-2 right-2 opacity-50"/>
+            <p className="whitespace-pre-wrap">{item.note}</p>
+          </div>
+        )}  
         {/* ... 筆記邏輯 ... */}
       </div>
     </div>
