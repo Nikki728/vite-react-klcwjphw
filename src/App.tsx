@@ -711,7 +711,7 @@ const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard
           <h2 className="text-3xl font-bold text-slate-800">{item.word}</h2>
           <button onClick={(e) => handleSpeak(item.type==='noun'?`${item.article} ${item.word}`:item.word, e)} className="text-slate-400 hover:text-slate-800 p-1"><Volume2 size={20}/></button>
         </div>
-        <div className="text-sm text-slate-500 mb-2 font-mono">{item.type==='noun'&&item.plural?`Pl. ${item.word}${item.plural}`:''}</div>
+        <div className="text-sm text-slate-500 mb-2 font-mono">{item.type==='noun'&&item.plural?`Pl. ${item.plural}`:''}</div>
         
         {/* 翻譯區域 */}
         <div className="border-l-4 border-slate-200 pl-3">
