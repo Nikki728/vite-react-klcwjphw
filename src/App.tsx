@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Volume2, CheckCircle, AlertCircle, BookOpen, GraduationCap, X, Plus, Trash2, Save, Loader2, Sparkles, Clock, FileText, Download, LogOut, User, LogIn, ExternalLink, Filter, KeyRound, Settings, Check, Zap, Activity, PenLine, ChevronDown, ChevronUp, StickyNote, Search, Pencil, Edit3, NotebookPen, Library, ListChecks, Database, Square, CheckSquare, Globe, ArrowRight, Mail, Key, KeyIcon, RefreshCcw, Lock, UserX } from 'lucide-react';
+// 新增引入 Eye, EyeOff
+import { Volume2, CheckCircle, AlertCircle, BookOpen, GraduationCap, X, Plus, Trash2, Save, Loader2, Sparkles, Clock, FileText, Download, LogOut, User, LogIn, ExternalLink, Filter, KeyRound, Settings, Check, Zap, Activity, PenLine, ChevronDown, ChevronUp, StickyNote, Search, Pencil, Edit3, NotebookPen, Library, ListChecks, Database, Square, CheckSquare, Globe, ArrowRight, Mail, Key, KeyIcon, RefreshCcw, Lock, UserX, Eye, EyeOff } from 'lucide-react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, deleteUser, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, writeBatch, serverTimestamp, getDocs } from 'firebase/firestore'; 
@@ -50,7 +51,7 @@ const getEffectiveApiKey = () => {
 let cachedModelName = localStorage.getItem('gemini_preferred_model');
 
 // --- 核心 AI 呼叫函式 ---
-const callGeminiAI = async (prompt, failedModels = []) => { // ✨ 修正: 接收失敗模型列表
+const callGeminiAI = async (prompt, failedModels = []) => { 
   const apiKey = getEffectiveApiKey();
   if (!apiKey) throw new Error("API Key 未設定");
 
@@ -66,24 +67,23 @@ const callGeminiAI = async (prompt, failedModels = []) => { // ✨ 修正: 接�
         const availableModels = listData.models
           ?.filter(m => m.name.includes('gemini') && m.supportedGenerationMethods?.includes('generateContent'))
           ?.map(m => m.name.replace('models/', ''))
-          .filter(m => !failedModels.includes(m)); // ✨ 修正: 排除已失敗的模型
+          .filter(m => !failedModels.includes(m)); 
         
         if (availableModels?.length > 0) {
           
-          // ✨ 模型優先順序調整：Live (2.5) > Lite > Flash > Pro
           cachedModelName = availableModels.find(m => m.includes('2.5-flash-live')) ||
                             availableModels.find(m => m.includes('2.5-flash-lite')) ||
                             availableModels.find(m => m.includes('2.5-flash')) || 
                             availableModels.find(m => m.includes('2.5-pro')) ||
-                            availableModels[0]; // 備援
+                            availableModels[0]; 
           
           localStorage.setItem('gemini_preferred_model', cachedModelName);
         } else {
-          throw new Error("所有可用模型皆已嘗試過或額度耗盡。"); // 沒有模型可用時拋出
+          throw new Error("所有可用模型皆已嘗試過或額度耗盡。"); 
         }
       }
     } catch (e) {
-        if (failedModels.length > 0) throw e; // 如果是遞迴失敗，拋出最終錯誤
+        if (failedModels.length > 0) throw e; 
         cachedModelName = 'gemini-1.5-flash';
     }
   }
@@ -106,14 +106,12 @@ const callGeminiAI = async (prompt, failedModels = []) => { // ✨ 修正: 接�
     if (!response.ok) {
       const errorMsg = data.error?.message || response.statusText;
       
-      // ✨ 額度耗盡備援：如果錯誤碼包含配額相關訊息，嘗試切換模型
       if (response.status === 429 || errorMsg.includes('quota') || errorMsg.includes('limit')) {
         console.warn(`[AI] 模型 ${cachedModelName} 額度耗盡或頻率過高，嘗試切換模型...`);
         
-        failedModels.push(cachedModelName); // 將失敗的模型加入清單
-        localStorage.removeItem('gemini_preferred_model'); // 清除快取，強制重新選擇
+        failedModels.push(cachedModelName); 
+        localStorage.removeItem('gemini_preferred_model'); 
         
-        // 遞迴調用自身，嘗試下一個優先級模型
         return await callGeminiAI(prompt, failedModels); 
       }
 
@@ -342,7 +340,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
     const cleanKey = key.trim();
     if (cleanKey) {
       localStorage.setItem('gemini_api_key', cleanKey);
-      cachedModelName = null; // ✨ 清除快取，強制重新篩選模型
+      cachedModelName = null; 
       localStorage.removeItem('gemini_preferred_model');
       setDiagStatus('success');
       setDiagResult({ message: "設定已儲存，下次操作將重新偵測最佳模型。" });
@@ -366,7 +364,6 @@ const SettingsModal = ({ isOpen, onClose }) => {
 
       const models = listData.models?.filter(m => m.name.includes('gemini') && m.supportedGenerationMethods?.includes('generateContent'))?.map(m => m.name.replace('models/', ''));
       
-      // ✨ 診斷時的模型優先級：Live > Lite > Flash > Pro
       const selectedModel = models.find(m => m.includes('2.5-flash-live')) ||
                             models.find(m => m.includes('2.5-flash-lite')) ||
                             models.find(m => m.includes('2.5-flash')) || 
@@ -384,13 +381,10 @@ const SettingsModal = ({ isOpen, onClose }) => {
       if (!genResponse.ok) throw new Error(`模型 ${selectedModel} 生成失敗: ${genData.error?.message}`);
 
       setDiagStatus('success');
-      // ✨ 修正: 確保顯示所有模型和選中的模型
       const modelListOutput = models.map(m => {
-          // 確保比對邏輯能正確識別出選用的模型
           let isSelected = m === selectedModel;
           return `${m}${isSelected ? ' (自動選用)' : ''}`;
       }).join('\n');
-
 
       setDiagResult({ 
           message: "診斷成功！", 
@@ -478,7 +472,6 @@ const UserMenu = ({ user, onLogout, onImportLibrary, onDownload, onSettings, onA
           </div>
           
           <div className="p-1">
-            {/* 帳號設定按鈕 */}
             <button onClick={() => { onAccount(); setIsOpen(false); }} className="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 rounded-lg flex items-center gap-2">
               <User size={16} className="text-slate-500" /> 帳號設定
             </button>
@@ -513,7 +506,7 @@ const LoginScreen = ({ onLogin, onRedirectLogin, error, errorCode }) => {
     <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
       <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-slate-100">
         <div className="bg-yellow-400 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-yellow-200 transform -rotate-6"><BookOpen size={40} className="text-slate-900" /></div>
-        <h1 className="text-3xl font-bold text-slate-900 mb-2">DeVoca App</h1> {/* 修正 App 名稱 */}
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">DeVoca App</h1>
         <p className="text-slate-500 mb-8">您的雲端德語單字本</p>
         
         {error && (
@@ -597,7 +590,7 @@ const NoteModal = ({ isOpen, onClose, note, onSave }) => {
   );
 };
 
-// --- 內建題庫匯入 Modal (新增) ---
+// --- 內建題庫匯入 Modal ---
 const LibraryModal = ({ isOpen, onClose, onImport }) => {
   if (!isOpen) return null;
 
@@ -647,8 +640,16 @@ const LibraryModal = ({ isOpen, onClose, onImport }) => {
 };
 
 // --- 單字卡元件 ---
-const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard, isBatchMode, isSelected, onSelect }) => {
+// 🔑 新增傳入 isMemoMode 屬性
+const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard, isBatchMode, isSelected, onSelect, isMemoMode }) => {
   const [isNoteExpanded, setIsNoteExpanded] = useState(false);
+  // 🔑 新增：卡片在背單字模式下是否被翻開
+  const [isRevealed, setIsRevealed] = useState(false);
+
+  // 當切換背單字模式時，將所有卡片狀態重置為「蓋上」
+  useEffect(() => {
+    setIsRevealed(false);
+  }, [isMemoMode]);
 
   const handleSpeak = (text, e) => {
     e.stopPropagation();
@@ -676,11 +677,18 @@ const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard
         ${getCardStyle()} 
         ${isSelected ? 'ring-2 ring-purple-500 ring-offset-2 border-purple-500' : ''}
         ${isBatchMode ? 'cursor-pointer hover:bg-slate-50' : ''}
+        ${isMemoMode && !isRevealed && !isBatchMode ? 'cursor-pointer hover:bg-indigo-50 ring-2 ring-indigo-300 ring-offset-1' : ''}
       `}
-      onClick={isBatchMode ? onSelect : undefined}
+      onClick={() => {
+        // 🔑 處理卡片點擊邏輯
+        if (isBatchMode) {
+          onSelect();
+        } else if (isMemoMode) {
+          setIsRevealed(!isRevealed);
+        }
+      }}
     >
       <div className="flex justify-between items-center mb-4">
-        {/* 左上角：標籤區 (含來源圖示) */}
         <div className="flex gap-2 items-center">
           <div className={`flex items-center justify-center p-1 rounded-full bg-slate-50 ${sourceColor}`} title={isBuiltIn ? "內建單字" : "自行新增"}>
             <SourceIcon size={14} strokeWidth={2.5}/>
@@ -689,7 +697,6 @@ const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard
           <span className={`h-6 flex items-center justify-center px-2 text-xs font-bold rounded uppercase ${getTypeBadgeColor()}`}>{item.type}</span>
         </div>
 
-        {/* 右上角：操作區 (或選取框) */}
         <div className="flex gap-1 items-center">
            {isBatchMode ? (
              <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${isSelected ? 'bg-purple-600 border-purple-600' : 'border-slate-300'}`}>
@@ -705,58 +712,73 @@ const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard
            )}
         </div>
       </div>
+      
       <div className="mb-4">
         <div className="flex items-baseline gap-2 mb-1 flex-wrap">
           {item.type === 'noun' && <span className={`text-lg font-bold ${item.article==='der'?'text-blue-600':item.article==='die'?'text-red-500':item.article==='das'?'text-green-600':'text-gray-500'}`}>{item.article}</span>}
           <h2 className="text-3xl font-bold text-slate-800">{item.word}</h2>
           <button onClick={(e) => handleSpeak(item.type==='noun'?`${item.article} ${item.word}`:item.word, e)} className="text-slate-400 hover:text-slate-800 p-1"><Volume2 size={20}/></button>
         </div>
-        <div className="text-sm text-slate-500 mb-2 font-mono">{item.type==='noun'&&item.plural?`Pl. ${item.plural}`:''}</div>
         
-        {/* 翻譯區域 */}
-        <div className="border-l-4 border-slate-200 pl-3">
-          <p className="text-lg text-slate-700 font-medium">{item.meaning}</p>
-          <p className="text-sm text-slate-400 mt-0.5">
-            {item.englishMeaning ? `(${item.englishMeaning})` : <span className="opacity-50 italic">(點擊上方編輯按鈕新增英文)</span>}
-          </p>
-        </div>
+        {/* 🔑 條件渲染：不是背單字模式，或是卡片已經被翻開，才顯示下方內容 */}
+        {(!isMemoMode || isRevealed) ? (
+          <>
+            <div className="text-sm text-slate-500 mb-2 font-mono">{item.type==='noun'&&item.plural?`Pl. ${item.plural}`:''}</div>
+            
+            <div className="border-l-4 border-slate-200 pl-3">
+              <p className="text-lg text-slate-700 font-medium">{item.meaning}</p>
+              <p className="text-sm text-slate-400 mt-0.5">
+                {item.englishMeaning ? `(${item.englishMeaning})` : <span className="opacity-50 italic">(點擊上方編輯按鈕新增英文)</span>}
+              </p>
+            </div>
 
-        {item.type==='verb'&&item.conjugation&&<div className="mt-3 bg-slate-100 p-2 rounded text-sm text-slate-600 flex gap-2 border border-slate-200"><Clock size={16} className="mt-0.5 text-purple-500 shrink-0"/><div className="font-mono">{item.conjugation}</div></div>}
-      </div>
-      <div className="mt-auto pt-4 border-t border-black/5">
-        <div className="flex gap-2 mb-1"><p className="text-sm text-slate-600 italic flex-1">"{item.example}"</p><button onClick={(e)=>handleSpeak(item.example,e)} className="text-slate-400 hover:text-slate-600"><Volume2 size={16}/></button></div>
-        <p className="text-xs text-slate-400 pl-1">{item.exampleMeaning}</p>
-      </div>
-
-      <div className="mt-3 pt-2 border-t border-dashed border-gray-200 flex flex-col gap-2">
-      <div className="flex justify-between items-center">
-          {item.note ? (
-            <button 
-              onClick={(e) => {e.stopPropagation(); setIsNoteExpanded(!isNoteExpanded)}}
-              className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
-            >
-              {isNoteExpanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
-              {isNoteExpanded ? '收起筆記' : '查看筆記'}
-            </button>
-          ) : <span className="text-xs text-transparent">.</span>}
-          
-          <button 
-            onClick={(e) => {e.stopPropagation(); onEditNote(item)}}
-            className="text-slate-400 hover:text-purple-600 transition-colors p-1 rounded-full hover:bg-purple-50"
-            title="編輯筆記"
-          >
-            <NotebookPen size={16} />
-          </button>
-        </div>
-        
-        {item.note && isNoteExpanded && (
-          <div className="bg-yellow-50 p-3 rounded-lg text-sm text-slate-700 border border-yellow-100 relative">
-            <StickyNote size={14} className="text-yellow-400 absolute top-2 right-2 opacity-50"/>
-            <p className="whitespace-pre-wrap">{item.note}</p>
+            {item.type==='verb'&&item.conjugation&&<div className="mt-3 bg-slate-100 p-2 rounded text-sm text-slate-600 flex gap-2 border border-slate-200"><Clock size={16} className="mt-0.5 text-purple-500 shrink-0"/><div className="font-mono">{item.conjugation}</div></div>}
+          </>
+        ) : (
+          <div className="mt-4 py-3 bg-slate-50/50 border border-dashed border-slate-300 rounded-lg text-center text-slate-400 text-sm flex items-center justify-center gap-2">
+            <Eye size={16} className="text-slate-300" /> 點擊卡片顯示翻譯與說明
           </div>
-        )}  
-        {/* ... 筆記邏輯 ... */}
+        )}
       </div>
+      
+      {/* 🔑 例句與筆記也一併加入條件判斷 */}
+      {(!isMemoMode || isRevealed) && (
+        <>
+          <div className="mt-auto pt-4 border-t border-black/5">
+            <div className="flex gap-2 mb-1"><p className="text-sm text-slate-600 italic flex-1">"{item.example}"</p><button onClick={(e)=>handleSpeak(item.example,e)} className="text-slate-400 hover:text-slate-600"><Volume2 size={16}/></button></div>
+            <p className="text-xs text-slate-400 pl-1">{item.exampleMeaning}</p>
+          </div>
+
+          <div className="mt-3 pt-2 border-t border-dashed border-gray-200 flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              {item.note ? (
+                <button 
+                  onClick={(e) => {e.stopPropagation(); setIsNoteExpanded(!isNoteExpanded)}}
+                  className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 transition-colors"
+                >
+                  {isNoteExpanded ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                  {isNoteExpanded ? '收起筆記' : '查看筆記'}
+                </button>
+              ) : <span className="text-xs text-transparent">.</span>}
+              
+              <button 
+                onClick={(e) => {e.stopPropagation(); onEditNote(item)}}
+                className="text-slate-400 hover:text-purple-600 transition-colors p-1 rounded-full hover:bg-purple-50"
+                title="編輯筆記"
+              >
+                <NotebookPen size={16} />
+              </button>
+            </div>
+            
+            {item.note && isNoteExpanded && (
+              <div className="bg-yellow-50 p-3 rounded-lg text-sm text-slate-700 border border-yellow-100 relative">
+                <StickyNote size={14} className="text-yellow-400 absolute top-2 right-2 opacity-50"/>
+                <p className="whitespace-pre-wrap">{item.note}</p>
+              </div>
+            )}  
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -800,7 +822,6 @@ const BatchImportModal = ({ isOpen, onClose, onBatchAdd }) => {
       setStatusMsg(`AI 分析中... (${i+1}/${total})`);
       try {
         const chunk = words.slice(i * BATCH, (i + 1) * BATCH);
-        // Prompt 更新：要求英文翻譯，並明確例句翻譯為繁體中文
         const prompt = `Translate German words: ${JSON.stringify(chunk)} to Traditional Chinese and English. 
         Return a valid JSON ARRAY. Each object: 
         - word
@@ -819,7 +840,7 @@ const BatchImportModal = ({ isOpen, onClose, onBatchAdd }) => {
         if (text) {
           const res = JSON.parse(text.replace(/```json|```/g, '').trim());
           if (Array.isArray(res)) { 
-            const result = await onBatchAdd(res, 'custom'); // 自訂來源
+            const result = await onBatchAdd(res, 'custom'); 
             if (result) {
               successCount += result.added;
               skippedCount += result.skipped;
@@ -865,7 +886,7 @@ const BatchImportModal = ({ isOpen, onClose, onBatchAdd }) => {
   );
 };
 
-// --- 單字編輯 Modal (通用：新增/編輯) ---
+// --- 單字編輯 Modal ---
 const WordFormModal = ({ isOpen, onClose, onSave, initialData }) => {
   const [formData, setFormData] = useState({ 
     word: '', article: '', plural: '', meaning: '', englishMeaning: '', 
@@ -891,7 +912,6 @@ const WordFormModal = ({ isOpen, onClose, onSave, initialData }) => {
 
     setIsGenerating(true);
     try {
-      // Prompt 更新：針對動詞變化要求精確的 3 態
       const prompt = `Analyze German word "${formData.word}". Return valid JSON object: meaning (Chinese), englishMeaning (English), article, plural, type (noun/verb/adj/adv), level, example, exampleMeaning (Traditional Chinese translation ONLY), conjugation (string, if verb: 3rd Pers. Sg. Indikativ for Präsens, Präteritum, Perfekt. e.g., "er geht, ging, ist gegangen").`;
       const data = await callGeminiAI(prompt);
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -948,7 +968,6 @@ export default function App() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [showLibraryModal, setShowLibraryModal] = useState(false); 
-  // 新增：帳號設定 Modal 狀態
   const [showAccountModal, setShowAccountModal] = useState(false); 
   
   const [currentEditNoteItem, setCurrentEditNoteItem] = useState(null);
@@ -966,11 +985,12 @@ export default function App() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
-  // ✨ 修正: 確保 useState 的參數正確
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState(new Set()); 
+  
+  // 🔑 新增：控制是否開啟背單字模式的全域狀態
+  const [isMemoMode, setIsMemoMode] = useState(false);
 
-  // 3. 處理滾動邏輯 (修復版：加入 Hysteresis 緩衝區)
   useEffect(() => {
     const handleScroll = () => {
       const currentY = window.scrollY;
@@ -986,14 +1006,12 @@ export default function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isScrolled]);
 
-  // 4. 監聽 isScrolled 變化來自動收合 (只執行一次)
   useEffect(() => {
     if (isScrolled && isFilterExpanded) {
       setIsFilterExpanded(false); 
     }
   }, [isScrolled]);
 
-  // 5. 注入 Tailwind Config (最終修正，保證生效)
   useEffect(() => {
     if (!document.getElementById('tailwind-cdn')) {
       const script = document.createElement('script');
@@ -1014,13 +1032,11 @@ export default function App() {
   const handleRedirectLogin = async () => { setAuthError(null); try { await signInWithRedirect(auth, new GoogleAuthProvider()); } catch (error) { setAuthError(error.message); } };
   const handleLogout = async () => { try { await signOut(auth); setVocabList([]); } catch (error) { console.error("Logout Failed", error); } };
 
-  // 註銷帳號
   const handleDeleteAccount = async () => {
     if (!user) return;
     if (!confirm('警告：您確定要永久刪除您的帳號及所有單字資料嗎？此操作無法復原。')) return;
 
     try {
-      // 1. 刪除 Firestore 中的所有單字
       const q = collection(db, 'vocab_users', user.uid, 'items');
       const querySnapshot = await getDocs(q);
       const batch = writeBatch(db);
@@ -1030,7 +1046,6 @@ export default function App() {
       });
       await batch.commit();
 
-      // 2. 刪除 Firebase 帳號
       await deleteUser(user);
 
       alert('帳號及所有資料已成功刪除。');
@@ -1045,8 +1060,6 @@ export default function App() {
     }
   };
 
-
-  // Data Fetching
   useEffect(() => {
     if (!user || !db) return;
     const q = collection(db, 'vocab_users', user.uid, 'items');
@@ -1062,9 +1075,6 @@ export default function App() {
     return () => unsubscribe();
   }, [user]);
 
-  const seedData = async () => { if (!user || !db) return; const batch = writeBatch(db); SEED_VOCAB_DATA.forEach((word) => { const docRef = doc(collection(db, 'vocab_users', user.uid, 'items')); batch.set(docRef, { ...word, status: 'new', source: 'builtin', createdAt: serverTimestamp() }); }); await batch.commit(); };
-  
-  // 處理新增或更新
   const handleSaveWord = async (wordData) => {
     if (!user) return;
     if (!currentEditItem) {
@@ -1085,7 +1095,6 @@ export default function App() {
   const handleToggleStatus = async (id, currentStatus, targetStatus) => { const newStatus = currentStatus === targetStatus ? 'new' : targetStatus; await updateDoc(doc(db, 'vocab_users', user.uid, 'items', id), { status: newStatus }); };
   const handleDeleteWord = async (id) => { if (window.confirm('確定刪除？')) await deleteDoc(doc(db, 'vocab_users', user.uid, 'items', id)); };
   
-  // 批量新增 (含防呆檢查)
   const handleBatchAdd = async (words, source = 'custom') => { 
     const CHUNK_SIZE = 400;
     const chunks = [];
@@ -1135,7 +1144,6 @@ export default function App() {
     return { added: totalAdded, skipped: totalSkipped };
   };
 
-  // 匯入內建單字庫
   const handleImportWords = async (wordList) => {
     if (!user) return;
     if (!confirm(`確定要匯入 ${wordList.length} 個單字嗎？\n系統會自動略過重複的單字。`)) return;
@@ -1152,7 +1160,6 @@ export default function App() {
     }
   };
 
-  // 批次選取邏輯
   const toggleSelect = (id) => {
     const newSelected = new Set(selectedItems);
     if (newSelected.has(id)) newSelected.delete(id);
@@ -1160,7 +1167,6 @@ export default function App() {
     setSelectedItems(newSelected);
   };
 
-  // 批次刪除
   const handleBatchDelete = async () => {
     if (!confirm(`確定要刪除選取的 ${selectedItems.size} 張卡片嗎？此動作無法復原。`)) return;
     
@@ -1224,9 +1230,20 @@ export default function App() {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-sm px-4 py-3 flex justify-between items-center">
         <div className="flex items-center gap-2"><div className="bg-yellow-400 p-1.5 rounded text-slate-900"><BookOpen size={20} /></div><span className="font-bold text-lg hidden sm:inline">DeVoca App</span></div>
         <div className="flex gap-2 items-center">
+            
+            {/* 🔑 新增：背單字模式開關 (會跟批次開關互斥) */}
+            <button 
+              onClick={() => { setIsMemoMode(!isMemoMode); setIsBatchMode(false); setSelectedItems(new Set()); }}
+              className={`p-2 border rounded-lg transition-colors flex items-center gap-1 ${isMemoMode ? 'bg-indigo-100 border-indigo-400 text-indigo-700 shadow-inner' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'}`}
+              title="背單字模式"
+            >
+              {isMemoMode ? <EyeOff size={18} /> : <Eye size={18} />}
+              <span className="hidden sm:inline text-sm font-semibold">{isMemoMode ? '關閉背單字' : '背單字模式'}</span>
+            </button>
+
             {/* 批次選取開關 */}
             <button 
-              onClick={() => { setIsBatchMode(!isBatchMode); setSelectedItems(new Set()); }}
+              onClick={() => { setIsBatchMode(!isBatchMode); setIsMemoMode(false); setSelectedItems(new Set()); }}
               className={`p-2 border rounded-lg transition-colors ${isBatchMode ? 'bg-purple-100 border-purple-400 text-purple-700' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-600'}`}
               title="批次管理"
             >
@@ -1234,14 +1251,13 @@ export default function App() {
             </button>
 
             <div className="flex items-center gap-2 mr-2 border-r pr-4 border-slate-200">
-               {/* 這裡改成下拉選單 UserMenu */}
                <UserMenu 
                  user={user} 
                  onLogout={handleLogout} 
                  onImportLibrary={() => setShowLibraryModal(true)}
                  onDownload={downloadData}
                  onSettings={() => setShowSettingsModal(true)}
-                 onAccount={() => setShowAccountModal(true)} // 點擊頭像跳出帳號設定
+                 onAccount={() => setShowAccountModal(true)}
                />
             </div>
             
@@ -1250,7 +1266,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* 2. 主畫面使用全寬版面 (max-w-full + 適當 padding) */}
       <main className="w-full max-w-[1920px] mx-auto px-4 md:px-6 lg:px-8 py-4 flex-grow">
         {vocabList.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-slate-300 rounded-xl mt-8 mx-auto max-w-4xl">
@@ -1263,13 +1278,8 @@ export default function App() {
           </div>
          ) : (
           <>
-             {/* 1. 智慧收折篩選器 */}
              <div className={`mb-6 bg-white rounded-2xl border border-slate-200 shadow-sm sticky top-20 z-10 transition-all duration-300 ease-in-out ${isScrolled && !isFilterExpanded ? 'p-2' : 'p-5'}`}>
-                {/* 篩選器 Header (點擊可展開/收起) */}
-                <div 
-                  className="flex items-center justify-between"
-                >
-                  {/* 搜尋框區塊 */}
+                <div className="flex items-center justify-between">
                   <div className="flex-1 max-w-md mr-4">
                     <div className="relative group">
                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 group-focus-within:text-purple-500" size={16} />
@@ -1302,24 +1312,21 @@ export default function App() {
                   </div>
                 </div>
                 
-                {/* 篩選內容區 (根據狀態顯示/隱藏) */}
                 {isFilterExpanded && (
                   <div className={`space-y-3 ${isScrolled ? 'mt-4 animate-in fade-in slide-in-from-top-2 duration-200' : 'mt-4'}`}>
                     <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">等級:</span>{['A1', 'A2', 'B1'].map(l => (<FilterChip key={l} label={l} isSelected={selectedLevels.includes(l)} onClick={() => toggleFilter(setSelectedLevels, l)} colorClass="bg-slate-700 text-white" />))}</div>
                     <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">詞性:</span><FilterChip label="名詞" isSelected={selectedTypes.includes('noun')} onClick={() => toggleFilter(setSelectedTypes, 'noun')} colorClass="bg-blue-600 text-white" /><FilterChip label="動詞" isSelected={selectedTypes.includes('verb')} onClick={() => toggleFilter(setSelectedTypes, 'verb')} colorClass="bg-purple-600 text-white" /><FilterChip label="形容詞" isSelected={selectedTypes.includes('adj')} onClick={() => toggleFilter(setSelectedTypes, 'adj')} colorClass="bg-yellow-500 text-white" /><FilterChip label="副詞" isSelected={selectedTypes.includes('adv')} onClick={() => toggleFilter(setSelectedTypes, 'adv')} colorClass="bg-orange-500 text-white" /></div>
                     <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">狀態:</span><FilterChip label="未標記" isSelected={selectedStatuses.includes('new')} onClick={() => toggleFilter(setSelectedStatuses, 'new')} colorClass="bg-slate-400 text-white" /><FilterChip label="需加強" isSelected={selectedStatuses.includes('review')} onClick={() => toggleFilter(setSelectedStatuses, 'review')} colorClass="bg-amber-500 text-white" /><FilterChip label="已學會" isSelected={selectedStatuses.includes('learned')} onClick={() => toggleFilter(setSelectedStatuses, 'learned')} colorClass="bg-emerald-600 text-white" /></div>
-                    {/* 新增：來源篩選 */}
                     <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">來源:</span><FilterChip label="自訂" isSelected={selectedSources.includes('custom')} onClick={() => toggleFilter(setSelectedSources, 'custom')} colorClass="bg-orange-500 text-white" /><FilterChip label="內建" isSelected={selectedSources.includes('builtin')} onClick={() => toggleFilter(setSelectedSources, 'builtin')} colorClass="bg-purple-500 text-white" /></div>
                   </div>
                 )}
              </div>
              
-             {/* 3. 四欄式排版 (lg:grid-cols-4) */}
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
-               {filtered.map(item => <VocabularyCard key={item.id} item={item} onToggleStatus={handleToggleStatus} onDelete={handleDeleteWord} onEditNote={openEditNote} onEditCard={openEditCardModal} isBatchMode={isBatchMode} isSelected={selectedItems.has(item.id)} onSelect={() => toggleSelect(item.id)} />)}
+               {/* 🔑 傳入 isMemoMode 給子元件 */}
+               {filtered.map(item => <VocabularyCard key={item.id} item={item} onToggleStatus={handleToggleStatus} onDelete={handleDeleteWord} onEditNote={openEditNote} onEditCard={openEditCardModal} isBatchMode={isBatchMode} isSelected={selectedItems.has(item.id)} onSelect={() => toggleSelect(item.id)} isMemoMode={isMemoMode} />)}
              </div>
 
-             {/* 批次操作浮動選單 (手機版樣式優化：w-[92%] + justify-between + whitespace-nowrap) */}
              {isBatchMode && selectedItems.size > 0 && (
                 <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[92%] max-w-md bg-white px-4 py-3 rounded-full shadow-xl border border-slate-200 flex justify-between items-center gap-3 animate-in slide-in-from-bottom-4 z-50">
                   <span className="text-slate-700 font-bold whitespace-nowrap ml-2">{selectedItems.size} 張已選取</span>
@@ -1335,7 +1342,6 @@ export default function App() {
          )}
       </main>
       
-      {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-6 mt-auto">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="text-sm text-slate-500">
