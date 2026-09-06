@@ -7,7 +7,7 @@ import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot
 // ==========================================
 // 🔴 設定區：已填入您的 Firebase Keys
 // ==========================================
-const ENABLE_DTZ_FEATURE = true; // ✨ DTZ 功能總開關 (true: 開啟, false: 關閉)
+const ENABLE_DTZ_FEATURE = false; // ✨ DTZ 功能總開關 (true: 開啟, false: 關閉)
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVqPF-W_z4lvkuVMfllRLW2fVBji4uzp0",
