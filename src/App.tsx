@@ -693,7 +693,7 @@ const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard
           <div className={`flex items-center justify-center p-1 rounded-full bg-slate-50 ${sourceColor}`} title={isBuiltIn ? "內建單字" : "自行新增"}>
             <SourceIcon size={14} strokeWidth={2.5}/>
           </div>
-          <span className="h-6 flex items-center justify-center px-2 text-xs font-bold rounded bg-slate-800 text-white">{item.level}</span> {item.subCategory && <span className="h-6 flex items-center justify-center px-2 text-xs font-bold rounded bg-blue-100 text-blue-700 border border-blue-200">{item.subCategory}</span>}
+          <span className="h-6 flex items-center justify-center px-2 text-xs font-bold rounded bg-slate-800 text-white">{item.level}</span>
           <span className={`h-6 flex items-center justify-center px-2 text-xs font-bold rounded uppercase ${getTypeBadgeColor()}`}>{item.type}</span>
         </div>
 
@@ -828,7 +828,8 @@ const BatchImportModal = ({ isOpen, onClose, onBatchAdd }) => {
         - meaning (Chinese)
         - englishMeaning (English)
         - type (noun/verb/adj/adv)
-        - level (A1/A2/B1/DTZ口說)        - article (der/die/das)
+        - level (A1/A2/B1)
+        - article (der/die/das)
         - plural
         - conjugation (string, if verb: 3rd Pers. Sg. Indikativ for Präsens, Präteritum, Perfekt. e.g., "er geht, ging, ist gegangen")
         - example (German)
@@ -888,7 +889,7 @@ const BatchImportModal = ({ isOpen, onClose, onBatchAdd }) => {
 // --- 單字編輯 Modal ---
 const WordFormModal = ({ isOpen, onClose, onSave, initialData }) => {
   const [formData, setFormData] = useState({ 
-    word: '', article: '', plural: '', meaning: '', englishMeaning: '', subCategory: '', 
+    word: '', article: '', plural: '', meaning: '', englishMeaning: '', 
     level: 'A2', type: 'noun', example: '', exampleMeaning: '', conjugation: '' 
   });
   const [isGenerating, setIsGenerating] = useState(false);
@@ -911,7 +912,8 @@ const WordFormModal = ({ isOpen, onClose, onSave, initialData }) => {
 
     setIsGenerating(true);
     try {
-      const prompt = `Analyze German word "${formData.word}". Return valid JSON object: meaning (Chinese), englishMeaning (English), article, plural, type (noun/verb/adj/adv), level (A1/A2/B1/DTZ口說), example, exampleMeaning (Traditional Chinese translation ONLY), conjugation (string, if verb: 3rd Pers. Sg. Indikativ for Präsens, Präteritum, Perfekt. e.g., "er geht, ging, ist gegangen").`;      const data = await callGeminiAI(prompt);
+      const prompt = `Analyze German word "${formData.word}". Return valid JSON object: meaning (Chinese), englishMeaning (English), article, plural, type (noun/verb/adj/adv), level, example, exampleMeaning (Traditional Chinese translation ONLY), conjugation (string, if verb: 3rd Pers. Sg. Indikativ for Präsens, Präteritum, Perfekt. e.g., "er geht, ging, ist gegangen").`;
+      const data = await callGeminiAI(prompt);
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (text) {
         setFormData(prev => ({ ...prev, ...JSON.parse(text.replace(/```json|```/g, '').trim()) }));
@@ -941,12 +943,11 @@ const WordFormModal = ({ isOpen, onClose, onSave, initialData }) => {
             <input required value={formData.meaning} onChange={e=>setFormData({...formData, meaning: e.target.value})} className="p-2 border rounded" placeholder="中文意思"/>
             <input value={formData.englishMeaning} onChange={e=>setFormData({...formData, englishMeaning: e.target.value})} className="p-2 border rounded" placeholder="英文意思"/>
           </div>
-          <div className="grid grid-cols-2 gap-4"><select value={formData.type} onChange={e=>setFormData({...formData, type: e.target.value})} className="p-2 border rounded"><option value="noun">名詞</option><option value="verb">動詞</option><option value="adj">形容詞</option><option value="adv">副詞</option></select><select value={formData.level} onChange={e=>setFormData({...formData, level: e.target.value})} className="p-2 border rounded"><option value="A1">A1</option><option value="A2">A2</option><option value="B1">B1</option><option value="DTZ口說">DTZ口說</option></select></div>
+          <div className="grid grid-cols-2 gap-4"><select value={formData.type} onChange={e=>setFormData({...formData, type: e.target.value})} className="p-2 border rounded"><option value="noun">名詞</option><option value="verb">動詞</option><option value="adj">形容詞</option><option value="adv">副詞</option></select><select value={formData.level} onChange={e=>setFormData({...formData.level, level: e.target.value})} className="p-2 border rounded"><option value="A1">A1</option><option value="A2">A2</option><option value="B1">B1</option></select></div>
           <div className="grid grid-cols-2 gap-4"><select value={formData.article} onChange={e=>setFormData({...formData.article, article: e.target.value})} className="p-2 border rounded" disabled={formData.type!=='noun'}><option value="">-</option><option value="der">der</option><option value="die">die</option><option value="das">das</option></select><input value={formData.plural} onChange={e=>setFormData({...formData.plural, plural: e.target.value})} className="p-2 border rounded" placeholder="複數" disabled={formData.type!=='noun'}/></div>
           {formData.type==='verb'&&<input value={formData.conjugation} onChange={e=>setFormData({...formData.conjugation, conjugation: e.target.value})} className="w-full p-2 border border-purple-200 bg-purple-50 rounded" placeholder="動詞變化"/>}
           <input value={formData.example} onChange={e=>setFormData({...formData.example, example: e.target.value})} className="w-full p-2 border rounded" placeholder="例句"/>
           <input value={formData.exampleMeaning} onChange={e=>setFormData({...formData.exampleMeaning, exampleMeaning: e.target.value})} className="w-full p-2 border rounded" placeholder="例句翻譯"/>
-          {formData.level === 'DTZ口說' && <input value={formData.subCategory || ''} onChange={e=>setFormData({...formData, subCategory: e.target.value})} className="w-full p-2 border border-blue-200 bg-blue-50 rounded text-blue-800 placeholder:text-blue-300" placeholder="輸入 DTZ 口說主題 (例如：圖片描述、計畫活動...)"/>}
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">取消</button>
             <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800 flex items-center gap-2"><Save size={18}/> 儲存</button>
@@ -979,7 +980,6 @@ export default function App() {
   const [selectedTypes, setSelectedTypes] = useState([]);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [selectedSources, setSelectedSources] = useState([]); 
-  const [selectedSubCategories, setSelectedSubCategories] = useState([]); // 新增子分類篩選狀態
   const [searchTerm, setSearchTerm] = useState(''); 
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -1209,24 +1209,15 @@ export default function App() {
   };
 
   const toggleFilter = (setter, value) => { setter(prev => prev.includes(value) ? prev.filter(p => p !== value) : [...prev, value]); };
-
-  // 動態掃描目前所有單字，揪出所有存在過的子分類
-const availableSubCategories = Array.from(new Set(vocabList.filter(item => item.level === 'DTZ口說' && item.subCategory).map(item => item.subCategory)));
   
   const filtered = vocabList.filter(item => {
-  const levelMatch = selectedLevels.length === 0 || selectedLevels.includes(item.level);
-  const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(item.type);
-  const statusMatch = selectedStatuses.length === 0 || selectedStatuses.some(s => s === 'new' ? (item.status === 'new' || !item.status) : item.status === s);
-  const sourceMatch = selectedSources.length === 0 || selectedSources.includes(item.source || 'custom');
-  const searchMatch = searchTerm === '' || item.word.toLowerCase().includes(searchTerm.toLowerCase());
-  // 新增子分類比對邏輯
-  const subCatMatch = selectedSubCategories.length === 0 || selectedSubCategories.includes(item.subCategory);
-  
-  return levelMatch && typeMatch && statusMatch && sourceMatch && searchMatch && subCatMatch;
-});
-
-// 把 selectedSubCategories.length 加進計算裡
-const activeFiltersCount = selectedLevels.length + selectedTypes.length + selectedStatuses.length + selectedSources.length + selectedSubCategories.length;
+    const levelMatch = selectedLevels.length === 0 || selectedLevels.includes(item.level);
+    const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(item.type);
+    const statusMatch = selectedStatuses.length === 0 || selectedStatuses.some(s => s === 'new' ? (item.status === 'new' || !item.status) : item.status === s);
+    const sourceMatch = selectedSources.length === 0 || selectedSources.includes(item.source || 'custom');
+    const searchMatch = searchTerm === '' || item.word.toLowerCase().includes(searchTerm.toLowerCase());
+    return levelMatch && typeMatch && statusMatch && sourceMatch && searchMatch;
+  });
 
   const activeFiltersCount = selectedLevels.length + selectedTypes.length + selectedStatuses.length + selectedSources.length;
 
@@ -1323,8 +1314,8 @@ const activeFiltersCount = selectedLevels.length + selectedTypes.length + select
                 
                 {isFilterExpanded && (
                   <div className={`space-y-3 ${isScrolled ? 'mt-4 animate-in fade-in slide-in-from-top-2 duration-200' : 'mt-4'}`}>
-                    <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">等級:</span>{['A1', 'A2', 'B1', 'DTZ口說'].map(l => (<FilterChip key={l} label={l} isSelected={selectedLevels.includes(l)} onClick={() => toggleFilter(setSelectedLevels, l)} colorClass="bg-slate-700 text-white" />))}</div>                    <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">詞性:</span><FilterChip label="名詞" isSelected={selectedTypes.includes('noun')} onClick={() => toggleFilter(setSelectedTypes, 'noun')} colorClass="bg-blue-600 text-white" /><FilterChip label="動詞" isSelected={selectedTypes.includes('verb')} onClick={() => toggleFilter(setSelectedTypes, 'verb')} colorClass="bg-purple-600 text-white" /><FilterChip label="形容詞" isSelected={selectedTypes.includes('adj')} onClick={() => toggleFilter(setSelectedTypes, 'adj')} colorClass="bg-yellow-500 text-white" /><FilterChip label="副詞" isSelected={selectedTypes.includes('adv')} onClick={() => toggleFilter(setSelectedTypes, 'adv')} colorClass="bg-orange-500 text-white" /></div>
-                    {availableSubCategories.length > 0 && (<div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">DTZ子分類:</span>{availableSubCategories.map(sub => (<FilterChip key={sub} label={sub} isSelected={selectedSubCategories.includes(sub)} onClick={() => toggleFilter(setSelectedSubCategories, sub)} colorClass="bg-blue-600 text-white" />))}</div>)}
+                    <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">等級:</span>{['A1', 'A2', 'B1'].map(l => (<FilterChip key={l} label={l} isSelected={selectedLevels.includes(l)} onClick={() => toggleFilter(setSelectedLevels, l)} colorClass="bg-slate-700 text-white" />))}</div>
+                    <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">詞性:</span><FilterChip label="名詞" isSelected={selectedTypes.includes('noun')} onClick={() => toggleFilter(setSelectedTypes, 'noun')} colorClass="bg-blue-600 text-white" /><FilterChip label="動詞" isSelected={selectedTypes.includes('verb')} onClick={() => toggleFilter(setSelectedTypes, 'verb')} colorClass="bg-purple-600 text-white" /><FilterChip label="形容詞" isSelected={selectedTypes.includes('adj')} onClick={() => toggleFilter(setSelectedTypes, 'adj')} colorClass="bg-yellow-500 text-white" /><FilterChip label="副詞" isSelected={selectedTypes.includes('adv')} onClick={() => toggleFilter(setSelectedTypes, 'adv')} colorClass="bg-orange-500 text-white" /></div>
                     <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">狀態:</span><FilterChip label="未標記" isSelected={selectedStatuses.includes('new')} onClick={() => toggleFilter(setSelectedStatuses, 'new')} colorClass="bg-slate-400 text-white" /><FilterChip label="需加強" isSelected={selectedStatuses.includes('review')} onClick={() => toggleFilter(setSelectedStatuses, 'review')} colorClass="bg-amber-500 text-white" /><FilterChip label="已學會" isSelected={selectedStatuses.includes('learned')} onClick={() => toggleFilter(setSelectedStatuses, 'learned')} colorClass="bg-emerald-600 text-white" /></div>
                     <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">來源:</span><FilterChip label="自訂" isSelected={selectedSources.includes('custom')} onClick={() => toggleFilter(setSelectedSources, 'custom')} colorClass="bg-orange-500 text-white" /><FilterChip label="內建" isSelected={selectedSources.includes('builtin')} onClick={() => toggleFilter(setSelectedSources, 'builtin')} colorClass="bg-purple-500 text-white" /></div>
                   </div>
