@@ -709,7 +709,7 @@ const BatchImportModal = ({ isOpen, onClose, onBatchAdd }) => {
 };
 
 // 單字編輯 Modal
-const WordFormModal = ({ isOpen, onClose, onSave, initialData }) => {
+const WordFormModal = ({ isOpen, onClose, onSave, initialData, availableSubCategories = [] }) => {
   const [formData, setFormData] = useState({ 
     word: '', article: '', plural: '', meaning: '', englishMeaning: '', subCategory: '',
     level: 'A2', type: 'noun', example: '', exampleMeaning: '', conjugation: '' 
@@ -783,8 +783,20 @@ const WordFormModal = ({ isOpen, onClose, onSave, initialData }) => {
           <input value={formData.example} onChange={e=>setFormData({...formData, example: e.target.value})} className="w-full p-2 border rounded" placeholder="例句"/>
           <input value={formData.exampleMeaning} onChange={e=>setFormData({...formData, exampleMeaning: e.target.value})} className="w-full p-2 border rounded" placeholder="例句翻譯"/>
           
-          {ENABLE_DTZ_FEATURE && formData.level === 'DTZ口說' && <input value={formData.subCategory || ''} onChange={e=>setFormData({...formData, subCategory: e.target.value})} className="w-full p-2 border border-blue-200 bg-blue-50 rounded text-blue-800 placeholder:text-blue-300" placeholder="自由輸入 DTZ 子分類 (例如：圖片描述、計畫活動...)"/>}
-
+          {ENABLE_DTZ_FEATURE && formData.level === 'DTZ口說' && (
+            <div className="col-span-2">
+              <input 
+                list="subCategory-list" 
+                value={formData.subCategory || ''} 
+                onChange={e=>setFormData({...formData, subCategory: e.target.value})} 
+                className="w-full p-2 border border-orange-200 bg-orange-50 rounded text-orange-800 placeholder:text-orange-300" 
+                placeholder="選擇或自由輸入 DTZ 子分類 (例如：圖片描述...)"
+              />
+              <datalist id="subCategory-list">
+                {availableSubCategories.map(cat => <option key={cat} value={cat} />)}
+              </datalist>
+            </div>
+          )}
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">取消</button>
             <button type="submit" className="px-4 py-2 bg-slate-900 text-white rounded hover:bg-slate-800 flex items-center gap-2"><Save size={18}/> 儲存</button>
@@ -1101,8 +1113,7 @@ export default function App() {
       </footer>
 
       <BatchImportModal isOpen={showBatchModal} onClose={() => setShowBatchModal(false)} onBatchAdd={handleBatchAdd} />
-      <WordFormModal isOpen={showWordModal} onClose={() => setShowWordModal(false)} onSave={handleSaveWord} initialData={currentEditItem} />
-      <SettingsModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
+      <WordFormModal isOpen={showWordModal} onClose={() => setShowWordModal(false)} onSave={handleSaveWord} initialData={currentEditItem} availableSubCategories={availableSubCategories} />      <SettingsModal isOpen={showSettingsModal} onClose={() => setShowSettingsModal(false)} />
       <NoteModal isOpen={showNoteModal} onClose={() => setShowNoteModal(false)} note={currentEditNoteItem?.note} onSave={handleSaveNote} />
       <LibraryModal isOpen={showLibraryModal} onClose={() => setShowLibraryModal(false)} onImport={handleImportWords} />
       {user && <AccountSettingsModal 
