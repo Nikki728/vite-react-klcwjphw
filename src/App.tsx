@@ -1209,6 +1209,9 @@ export default function App() {
   };
 
   const toggleFilter = (setter, value) => { setter(prev => prev.includes(value) ? prev.filter(p => p !== value) : [...prev, value]); };
+
+  // 動態掃描目前所有單字，揪出所有存在過的子分類
+const availableSubCategories = Array.from(new Set(vocabList.filter(item => item.level === 'DTZ口說' && item.subCategory).map(item => item.subCategory)));
   
   const filtered = vocabList.filter(item => {
   const levelMatch = selectedLevels.length === 0 || selectedLevels.includes(item.level);
