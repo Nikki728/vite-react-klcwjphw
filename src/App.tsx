@@ -7,6 +7,8 @@ import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot
 // ==========================================
 // 🔴 設定區：已填入您的 Firebase Keys
 // ==========================================
+const ENABLE_DTZ_FEATURE = true; // ✨ DTZ 功能總開關 (true: 開啟, false: 關閉)
+
 const firebaseConfig = {
   apiKey: "AIzaSyDVqPF-W_z4lvkuVMfllRLW2fVBji4uzp0",
   authDomain: "german-words-5587e.firebaseapp.com",
@@ -519,7 +521,7 @@ const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard
           </div>
           <span className="h-6 flex items-center justify-center px-2 text-xs font-bold rounded bg-slate-800 text-white">{item.level}</span>
           {/* DTZ 子分類標籤 */}
-          {item.subCategory && <span className="h-6 flex items-center justify-center px-2 text-xs font-bold rounded bg-orange-100 text-orange-700 border border-orange-200">{item.subCategory}</span>}
+          {ENABLE_DTZ_FEATURE && item.subCategory && <span className="h-6 flex items-center justify-center px-2 text-xs font-bold rounded bg-orange-100 text-orange-700 border border-orange-200">{item.subCategory}</span>}
           <span className={`h-6 flex items-center justify-center px-2 text-xs font-bold rounded uppercase ${getTypeBadgeColor()}`}>{item.type}</span>
         </div>
 
@@ -648,7 +650,7 @@ const BatchImportModal = ({ isOpen, onClose, onBatchAdd }) => {
         - meaning (Chinese)
         - englishMeaning (English)
         - type (noun/verb/adj/adv)
-        - level (A1/A2/B1/DTZ口說)
+        - level (A1/A2/B1${ENABLE_DTZ_FEATURE ? '/DTZ口說' : ''})
         - article (der/die/das)
         - plural
         - conjugation (string, if verb: 3rd Pers. Sg. Indikativ for Präsens, Präteritum, Perfekt. e.g., "er geht, ging, ist gegangen")
@@ -732,7 +734,7 @@ const WordFormModal = ({ isOpen, onClose, onSave, initialData }) => {
 
     setIsGenerating(true);
     try {
-      const prompt = `Analyze German word "${formData.word}". Return valid JSON object: meaning (Chinese), englishMeaning (English), article, plural, type (noun/verb/adj/adv), level (A1/A2/B1/DTZ口說), example, exampleMeaning (Traditional Chinese translation ONLY), conjugation (string, if verb: 3rd Pers. Sg. Indikativ for Präsens, Präteritum, Perfekt. e.g., "er geht, ging, ist gegangen").`;
+      const prompt = `Analyze German word "${formData.word}". Return valid JSON object: meaning (Chinese), englishMeaning (English), article, plural, type (noun/verb/adj/adv), level (A1/A2/B1${ENABLE_DTZ_FEATURE ? '/DTZ口說' : ''}), example, exampleMeaning (Traditional Chinese translation ONLY), conjugation (string, if verb: 3rd Pers. Sg. Indikativ for Präsens, Präteritum, Perfekt. e.g., "er geht, ging, ist gegangen").`;
       const data = await callGeminiAI(prompt);
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (text) {
@@ -768,7 +770,7 @@ const WordFormModal = ({ isOpen, onClose, onSave, initialData }) => {
               <option value="noun">名詞</option><option value="verb">動詞</option><option value="adj">形容詞</option><option value="adv">副詞</option>
             </select>
             <select value={formData.level} onChange={e=>setFormData({...formData, level: e.target.value})} className="p-2 border rounded">
-              <option value="A1">A1</option><option value="A2">A2</option><option value="B1">B1</option><option value="DTZ口說">DTZ口說</option>
+              <option value="A1">A1</option><option value="A2">A2</option><option value="B1">B1</option>{ENABLE_DTZ_FEATURE && <option value="DTZ口說">DTZ口說</option>}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -781,7 +783,7 @@ const WordFormModal = ({ isOpen, onClose, onSave, initialData }) => {
           <input value={formData.example} onChange={e=>setFormData({...formData, example: e.target.value})} className="w-full p-2 border rounded" placeholder="例句"/>
           <input value={formData.exampleMeaning} onChange={e=>setFormData({...formData, exampleMeaning: e.target.value})} className="w-full p-2 border rounded" placeholder="例句翻譯"/>
           
-          {formData.level === 'DTZ口說' && <input value={formData.subCategory || ''} onChange={e=>setFormData({...formData, subCategory: e.target.value})} className="w-full p-2 border border-blue-200 bg-blue-50 rounded text-blue-800 placeholder:text-blue-300" placeholder="自由輸入 DTZ 子分類 (例如：圖片描述、計畫活動...)"/>}
+          {ENABLE_DTZ_FEATURE && formData.level === 'DTZ口說' && <input value={formData.subCategory || ''} onChange={e=>setFormData({...formData, subCategory: e.target.value})} className="w-full p-2 border border-blue-200 bg-blue-50 rounded text-blue-800 placeholder:text-blue-300" placeholder="自由輸入 DTZ 子分類 (例如：圖片描述、計畫活動...)"/>}
 
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded">取消</button>
@@ -1054,10 +1056,10 @@ export default function App() {
                 
                 {isFilterExpanded && (
                   <div className={`space-y-3 ${isScrolled ? 'mt-4 animate-in fade-in slide-in-from-top-2 duration-200' : 'mt-4'}`}>
-                    <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">等級/分類:</span>{['A1', 'A2', 'B1', 'DTZ口說'].map(l => (<FilterChip key={l} label={l} isSelected={selectedLevels.includes(l)} onClick={() => toggleFilter(setSelectedLevels, l)} colorClass="bg-slate-700 text-white" />))}</div>
+                    <div className="flex flex-wrap gap-2 items-center"><span className="text-xs text-slate-400 mr-1">等級/分類:</span>{['A1', 'A2', 'B1', ...(ENABLE_DTZ_FEATURE ? ['DTZ口說'] : [])].map(l => (<FilterChip key={l} label={l} isSelected={selectedLevels.includes(l)} onClick={() => toggleFilter(setSelectedLevels, l)} colorClass="bg-slate-700 text-white" />))}</div>
                     
                     {/* 動態生成的子分類篩選按鈕 */}
-                    {availableSubCategories.length > 0 && (
+                    {ENABLE_DTZ_FEATURE && availableSubCategories.length > 0 && (
                       <div className="flex flex-wrap gap-2 items-center">
                         <span className="text-xs text-slate-400 mr-1">DTZ子分類:</span>
                         {availableSubCategories.map(sub => (<FilterChip key={sub} label={sub} isSelected={selectedSubCategories.includes(sub)} onClick={() => toggleFilter(setSelectedSubCategories, sub)} colorClass="bg-blue-600 text-white" />))}
