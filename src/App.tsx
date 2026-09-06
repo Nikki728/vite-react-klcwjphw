@@ -519,7 +519,7 @@ const VocabularyCard = ({ item, onToggleStatus, onDelete, onEditNote, onEditCard
           </div>
           <span className="h-6 flex items-center justify-center px-2 text-xs font-bold rounded bg-slate-800 text-white">{item.level}</span>
           {/* DTZ 子分類標籤 */}
-          {item.subCategory && <span className="h-6 flex items-center justify-center px-2 text-xs font-bold rounded bg-blue-100 text-blue-700 border border-blue-200">{item.subCategory}</span>}
+          {item.subCategory && <span className="h-6 flex items-center justify-center px-2 text-xs font-bold rounded bg-orange-100 text-orange-700 border border-orange-200">{item.subCategory}</span>}
           <span className={`h-6 flex items-center justify-center px-2 text-xs font-bold rounded uppercase ${getTypeBadgeColor()}`}>{item.type}</span>
         </div>
 
